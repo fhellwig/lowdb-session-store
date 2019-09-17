@@ -1,0 +1,25 @@
+{
+  "name": "lowdb-session-store",
+  "version": "1.0.0",
+  "description": "Express session store using lowdb",
+  "main": "lowdb-session-store.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fhellwig/lowdb-session-store.git"
+  },
+  "keywords": [
+    "express",
+    "session",
+    "store",
+    "lowdb"
+  ],
+  "author": "Frank Hellwig <frank@hellwig.org>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fhellwig/lowdb-session-store/issues"
+  },
+  "homepage": "https://github.com/fhellwig/lowdb-session-store#readme"
+}

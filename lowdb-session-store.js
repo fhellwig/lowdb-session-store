@@ -28,10 +28,13 @@ module.exports = function(session) {
   class SessionStore extends Store {
     constructor(db, options = {}) {
       super(options);
-      if (typeof db.getState !== 'function') {
-        throw new Error('The first argument must be a lowdb instance.');
+      if (db.constructor.name !== 'LodashWrapper') {
+        throw new Error('The first argument must be a LodashWrapper instance.');
       }
-      this.db = new Sessions(db, options.ttl, options.namespace);
+      if (!Array.isArray(db.value())) {
+        throw new Error('The value of the first argument must be an array.');
+      }
+      this.db = new Sessions(db, options.ttl);
       setInterval(() => {
         this.db.purge();
       }, 60000);
@@ -73,65 +76,51 @@ module.exports = function(session) {
 };
 
 class Sessions {
-  constructor(db, ttl, namespace) {
-    if (namespace !== null) {
-      namespace = namespace || 'sessions';
-    }
-    if (namespace) {
-      db.defaults({ [namespace]: {} }).write();
-    }
+  constructor(db, ttl) {
     this.db = db;
     this.ttl = ttl || 86400;
-    this.namespace = namespace;
-  }
-
-  get data() {
-    return this.namespace ? this.db.get(this.namespace) : this.db;
   }
 
   get(sid) {
-    const obj = this.data
-      .get(sid)
+    const obj = this.db
+      .find({ _id: sid })
       .cloneDeep()
       .value();
     return obj ? obj.session : null;
   }
 
   all() {
-    return this.data
-      .values()
+    return this.db
       .cloneDeep()
       .map(obj => obj.session)
       .value();
   }
 
   length() {
-    return this.data.size().value();
+    return this.db.size().value();
   }
 
   set(sid, session) {
     const expires = Date.now() + this.ttl * 1000;
-    this.data.set(sid, { session, expires }).write();
+    const obj = { _id: sid, session, expires };
+    const found = this.db.find({ _id: sid });
+    if (found.value()) {
+      found.assign(obj).write();
+    } else {
+      this.db.push(obj).write();
+    }
   }
 
   destroy(sid) {
-    this.data.unset(sid).write();
+    this.db.remove({ _id: sid }).write();
   }
 
   clear() {
-    this._replace({});
+    this.db.remove().write();
   }
 
   purge() {
     const now = Date.now();
-    this._replace(this.data.omitBy(obj => now > obj.expires).value());
-  }
-
-  _replace(data) {
-    if (this.namespace) {
-      this.db.set(this.namespace, data).write();
-    } else {
-      this.db.setState(data).write();
-    }
+    this.db.remove(obj => now > obj.expires).write();
   }
 }

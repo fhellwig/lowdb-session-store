@@ -10,12 +10,17 @@ $ npm install lowdb-session-store
 
 # Usage
 
-This store implements all methods specified by the `express-session` store interface. Usage is conventional:
+This store implements all methods specified by the `express-session` store interface.
 
 ```javascript
 const session = require('express-session');
 const LowdbStore = require('lowdb-session-store')(session);
+const lowdb = require('lowdb');
+const FileSync = require('lowdb/adapters/FileSync');
 
+// The default value must be an array.
+const adapter = new FileSync(pathname, { defaultValue: [] });
+const db = lowdb(adapter);
 ...
 
 app.use(session({
@@ -23,8 +28,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   store: new LowdbStore(db, {
-    ttl: 86400,
-    namespace: 'sessions'
+    ttl: 86400
   })
 }))
 ```
@@ -41,7 +45,35 @@ A new lowdb session store instance is created by instantiating the class returne
 
 - `ttl` - The expiration time for a session in seconds. A interval timer runs every ten minutes to purge expired sessions. The default value is `86400` (one day).
 
-- `namespace` - Sessions are stored in your `lowdb` instance under this property. The default value is `"sessions"`. If you decide to dedicate an entire `lowdb` database instance for session storage, you can explicitly set the `namespace` option to `null`. Please note that setting the `namespace` option to `null` means that the `clear` express session method will erase all entries from your database.
+## Session Storage Type
+
+The value of the database **must** be an array as the sessions are stored as a collection.
+
+If you want to store the sessions as a property of a larger object, you can do that provided that the property value is an array.
+
+```javascript
+const session = require('express-session');
+const LowdbStore = require('lowdb-session-store')(session);
+const lowdb = require('lowdb');
+const FileSync = require('lowdb/adapters/FileSync');
+
+// The sessions property must be an array.
+const adapter = new FileSync(pathname, { defaultValue: { sessions: [] }});
+const db = lowdb(adapter);
+...
+
+// We must get the sessions object before passing it to the session store.
+app.use(session({
+  secret: '12345',
+  resave: false,
+  saveUninitialized: false,
+  store: new LowdbStore(db.get('sessions'), {
+    ttl: 86400
+  })
+}))
+```
+
+In this example, the sessions array is a property of an object. To make this work, you must get that structure and pass it as the database parameter to the session store.
 
 # License
 

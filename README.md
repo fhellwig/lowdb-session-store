@@ -44,6 +44,7 @@ A new lowdb session store instance is created by instantiating the class returne
 ### Options
 
 - `ttl` - The expiration time for a session in seconds. A interval timer runs every ten minutes to purge expired sessions. The default value is `86400` (one day).
+- `disablePurge` - Set to true to disable the ten-minute session purge timer (useful for testing).
 
 ## Session Storage Type
 

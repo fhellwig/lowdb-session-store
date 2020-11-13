@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-module.exports = function(session) {
+module.exports = function (session) {
   const Store = session.Store;
 
   class SessionStore extends Store {
@@ -35,9 +35,11 @@ module.exports = function(session) {
         throw new Error('The value of the first argument must be an array.');
       }
       this.db = new Sessions(db, options.ttl);
-      setInterval(() => {
-        this.db.purge();
-      }, 60000);
+      if (!options.disablePurge) {
+        setInterval(() => {
+          this.db.purge();
+        }, 60000);
+      }
     }
 
     all(callback) {
@@ -82,17 +84,14 @@ class Sessions {
   }
 
   get(sid) {
-    const obj = this.db
-      .find({ _id: sid })
-      .cloneDeep()
-      .value();
+    const obj = this.db.find({ _id: sid }).cloneDeep().value();
     return obj ? obj.session : null;
   }
 
   all() {
     return this.db
       .cloneDeep()
-      .map(obj => obj.session)
+      .map((obj) => obj.session)
       .value();
   }
 
@@ -121,6 +120,6 @@ class Sessions {
 
   purge() {
     const now = Date.now();
-    this.db.remove(obj => now > obj.expires).write();
+    this.db.remove((obj) => now > obj.expires).write();
   }
 }

@@ -24,11 +24,12 @@
 
 module.exports = function (session) {
   const Store = session.Store;
+  const _ = require('lodash');
 
   class SessionStore extends Store {
     constructor(db, options = {}) {
       super(options);
-      if (db.constructor.name !== 'LodashWrapper') {
+      if (!db instanceof _) {
         throw new Error('The first argument must be a LodashWrapper instance.');
       }
       if (!Array.isArray(db.value())) {

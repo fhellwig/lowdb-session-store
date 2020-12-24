@@ -24,6 +24,7 @@
 
 module.exports = function (session) {
   const Store = session.Store;
+  const _ = require('lodash');
 
   class SessionStore extends Store {
     constructor(db, options = {}) {
